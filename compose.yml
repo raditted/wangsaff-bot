@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  watools-topup:
+    build: .
+    container_name: watools-topup
+    restart: unless-stopped
+    ports:
+      - "3131:3131"
+    environment:
+      - .env
+
