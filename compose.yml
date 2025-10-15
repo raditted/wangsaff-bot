@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  watools-topup:
+  wangsaff-bot:
     build: .
-    container_name: watools-topup
+    container_name: wangsaff-bot
     restart: unless-stopped
     ports:
       - "3131:3131"
