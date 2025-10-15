@@ -76,7 +76,7 @@ export const messagesHandler = async (messages, sock) => {
                 )
                 const targetMessage = msg.message.imageMessage
                     ? msg
-                    : { message: msg.message.extendedTextMessage?.contextInfo?.quotedMessage }
+                    : msg.message.extendedTextMessage?.contextInfo?.quotedMessage
 
                 const buffer = await downloadMediaMessage(
                     targetMessage,
