@@ -8,5 +8,5 @@ export const createAdReplyContext = (thumbBuffer) => {
             sourceUrl: "https://raditted.dev",
             thumbnail: thumbBuffer,
         },
-    };
-};
+    }
+}
