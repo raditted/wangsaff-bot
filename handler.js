@@ -20,7 +20,9 @@ export const messagesHandler = async (messages, sock) => {
 
     if (!text.startsWith(PREFIX)) return
 
-    const isCD = await cdDelay(sender, sock, msg)
+    const userJid = msg.key.participant || msg.key.remoteJid
+
+    const isCD = await cdDelay(userJid, sender, sock, msg)
     if (isCD) {
         return; 
     }
@@ -34,10 +36,9 @@ export const messagesHandler = async (messages, sock) => {
         case "stiker":
         case "sticker":
         case "s": {
-            cooldowns.set(sender, { time: now, warned: false })
-            handlerSticker(msg, sock, sender)
+            cooldowns.set(userJid, { time: now, duration: 30, warned: false })
+            handlerSticker(msg, sock, sender, userJid)
             break
         }
     }
 }
-
