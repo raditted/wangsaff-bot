@@ -7,7 +7,10 @@ export const messagesHandler = async (messages, sock) => {
     if (!msg?.message || msg.key.fromMe) return
 
     const sender = msg.key.remoteJid
-    if (sender.endsWith("@g.us")) return
+    if (sender.endsWith("@g.us")) {
+        const whitelistedGroups = process.env.WHITELIST_GROUPS?.split(',') || []
+        if (!whitelistedGroups.includes(sender)) return
+    }
 
     const text =
         msg.message?.conversation ||

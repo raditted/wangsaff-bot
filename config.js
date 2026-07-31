@@ -22,7 +22,7 @@ export const cdDelay = async (sender, sock, msg) => {
             return true // stop exec
         }
     }
-
+2
     await new Promise(res => setTimeout(res, delayMs))
 
     return false // continue exec
