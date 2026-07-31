@@ -3,7 +3,7 @@ import { downloadMediaMessage } from "@whiskeysockets/baileys"
 import "dotenv/config"
 import axios from "axios"
 import { createAdReplyContext } from "./contextInfo.js"
-import { cooldowns } from "../config.js"
+import { cooldowns, cdDelay } from "../config.js"
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -29,6 +29,12 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
         msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage
 
     if (!isImage) {
+        const isCD = await cdDelay(userJid, sender, sock, msg, '_instruction', 5)
+        if (isCD) return
+
+        // Set cooldown awal (5 detik) untuk mencegah spam petunjuk
+        cooldowns.set(userJid + '_instruction', { time: Date.now(), duration: 5, warned: false })
+
         await sock.sendMessage(sender, { react: { text: "❌", key: msg.key } })
         try {
         await sock.sendMessage(
@@ -48,6 +54,9 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
     const targetMessage = msg.message.imageMessage
         ? msg
         : { message: msg.message.extendedTextMessage?.contextInfo?.quotedMessage }
+
+    const isCD = await cdDelay(userJid, sender, sock, msg, '_sticker', 60)
+    if (isCD) return
 
     try {
         const buffer = await downloadMediaMessage(
@@ -78,7 +87,7 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
         )
         await sock.sendMessage(sender, { react: { text: "✅", key: msg.key } })
         
-        cooldowns.set(userJid, { time: Date.now(), duration: 60, warned: false })
+        cooldowns.set(userJid + '_sticker', { time: Date.now(), duration: 60, warned: false })
     } catch (error) {
         console.error("Error (create sticker):", error)
         await sock.sendMessage(
