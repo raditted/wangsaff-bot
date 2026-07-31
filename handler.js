@@ -31,7 +31,7 @@ export const messagesHandler = async (messages, sock) => {
         case "stiker":
         case "sticker":
         case "s": {
-            cooldowns.set(sender, now)
+            cooldowns.set(sender, { time: now, warned: false })
             handlerSticker(msg, sock, sender)
             break
         }

@@ -49,15 +49,6 @@ export const handlerSticker = async (msg, sock, sender) => {
         : { message: msg.message.extendedTextMessage?.contextInfo?.quotedMessage }
 
     try {
-        await sock.sendMessage(
-        sender,
-        {
-            text: "Keur proses yeuh blog...",
-            contextInfo: context,
-        },
-        { quoted: msg }
-        )
-
         const buffer = await downloadMediaMessage(
         targetMessage,
         "buffer",
@@ -85,7 +76,6 @@ export const handlerSticker = async (msg, sock, sender) => {
         }
         )
         await sock.sendMessage(sender, { react: { text: "✅", key: msg.key } })
-        await sock.readMessages([msg.key])
     } catch (error) {
         console.error("Error (create sticker):", error)
         await sock.sendMessage(
