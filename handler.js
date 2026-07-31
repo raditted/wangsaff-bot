@@ -22,21 +22,13 @@ export const messagesHandler = async (messages, sock) => {
 
     const userJid = msg.key.participant || msg.key.remoteJid
 
-    const isCD = await cdDelay(userJid, sender, sock, msg)
-    if (isCD) {
-        return; 
-    }
-
     const commandBody = text.slice(PREFIX.length).trim()
     const [command] = commandBody.split(/\s+/)
-
-    const now = Date.now();
 
     switch (command.toLowerCase()) {
         case "stiker":
         case "sticker":
         case "s": {
-            cooldowns.set(userJid, { time: now, duration: 30, warned: false })
             handlerSticker(msg, sock, sender, userJid)
             break
         }
