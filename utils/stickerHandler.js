@@ -3,10 +3,11 @@ import { downloadMediaMessage } from "@whiskeysockets/baileys"
 import "dotenv/config"
 import axios from "axios"
 import { createAdReplyContext } from "./contextInfo.js"
+import { cooldowns } from "../config.js"
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-export const handlerSticker = async (msg, sock, sender) => {
+export const handlerSticker = async (msg, sock, sender, userJid) => {
     await sock.sendMessage(sender, { react: { text: "⏳", key: msg.key } })
     let thumbBuffer = null
     try {
@@ -76,6 +77,8 @@ export const handlerSticker = async (msg, sock, sender) => {
         }
         )
         await sock.sendMessage(sender, { react: { text: "✅", key: msg.key } })
+        
+        cooldowns.set(userJid, { time: Date.now(), duration: 60, warned: false })
     } catch (error) {
         console.error("Error (create sticker):", error)
         await sock.sendMessage(
