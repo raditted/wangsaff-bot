@@ -26,9 +26,11 @@ export const cdDelay = async (userJid, sender, sock, msg, keySuffix = '', custom
                 cooldowns.set(cdKey, { time: lastCommandTime, duration, warned: true })
             }
             return true // stop exec
+        } else {
+            cooldowns.delete(cdKey)
         }
     }
-2
+
     await new Promise(res => setTimeout(res, delayMs))
 
     return false // continue exec
