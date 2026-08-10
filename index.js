@@ -38,7 +38,7 @@ const startSock = async () => {
         const { connection, lastDisconnect } = update
 
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error = Boom)?.output?.statusCode !== DisconnectReason.loggedOut
+            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
             console.log('❌ Connection closed. Reconnect:', shouldReconnect)
             if (shouldReconnect) startSock()
         } else if (connection === 'open') {
