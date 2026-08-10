@@ -7,19 +7,21 @@ import { cooldowns, cdDelay } from "../config.js"
 
 const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
+let cachedThumbBuffer = null;
+
 export const handlerSticker = async (msg, sock, sender, userJid) => {
     await sock.sendMessage(sender, { react: { text: "⏳", key: msg.key } })
-    let thumbBuffer = null
-    try {
-        const thumbnailUrl = process.env.THUMBNAIL_URL
-        if (thumbnailUrl) {
-        const response = await axios.get(thumbnailUrl, {
-            responseType: "arraybuffer",
-        })
-        thumbBuffer = Buffer.from(response.data, "binary")
+    let thumbBuffer = cachedThumbBuffer
+    if (!thumbBuffer && process.env.THUMBNAIL_URL) {
+        try {
+            const response = await axios.get(process.env.THUMBNAIL_URL, {
+                responseType: "arraybuffer",
+            })
+            cachedThumbBuffer = Buffer.from(response.data, "binary")
+            thumbBuffer = cachedThumbBuffer
+        } catch (error) {
+            console.error("❌ Error (downloading thumbnail):", error)
         }
-    } catch (error) {
-        console.error("❌ Error (downloading thumbnail):", error)
     }
 
     const context = createAdReplyContext(thumbBuffer)
