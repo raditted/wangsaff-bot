@@ -13,7 +13,6 @@ config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Dummy HTTP Server agar Heroku tidak SIGKILL (Error R10)
 const PORT = process.env.PORT || 3000
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
@@ -31,49 +30,8 @@ const {
 
 const delay = ms => new Promise(res => setTimeout(res, ms))
 
-const authFolder = join(__dirname, 'auth_info')
-
-// Restore session from process.env.SESSION_DATA jif exists
-const restoreSessionFromEnv = () => {
-    if (process.env.SESSION_DATA) {
-        try {
-            if (!fs.existsSync(authFolder)) {
-                fs.mkdirSync(authFolder, { recursive: true })
-            }
-            const filesObj = JSON.parse(Buffer.from(process.env.SESSION_DATA, 'base64').toString('utf-8'))
-            for (const [filename, content] of Object.entries(filesObj)) {
-                fs.writeFileSync(join(authFolder, filename), content)
-            }
-            console.log('✅ Session berhasil di-restore dari SESSION_DATA!')
-        } catch (err) {
-            console.error('❌ Gagal restore SESSION_DATA:', err.message)
-        }
-    }
-}
-
-// Generate string Base64 dari folder auth_info
-const exportSessionToBase64 = () => {
-    try {
-        if (!fs.existsSync(authFolder)) return null
-        const files = fs.readdirSync(authFolder)
-        const filesObj = {}
-        for (const file of files) {
-            const filePath = join(authFolder, file)
-            if (fs.statSync(filePath).isFile()) {
-                filesObj[file] = fs.readFileSync(filePath, 'utf-8')
-            }
-        }
-        return Buffer.from(JSON.stringify(filesObj)).toString('base64')
-    } catch (err) {
-        console.error('❌ Gagal export session ke Base64:', err.message)
-        return null
-    }
-}
-
 const startSock = async () => {
-    restoreSessionFromEnv()
-
-    const { state, saveCreds } = await useMultiFileAuthState(authFolder)
+    const { state, saveCreds } = await useMultiFileAuthState(join(__dirname, 'auth_info'))
     const { version } = await fetchLatestBaileysVersion()
 
     const sock = makeWASocket({
@@ -95,12 +53,6 @@ const startSock = async () => {
             if (shouldReconnect) startSock()
         } else if (connection === 'open') {
             console.log('✅ Bot connected!')
-            const sessionBase64 = exportSessionToBase64()
-            if (sessionBase64) {
-                console.log('\n================ SESSION DATA (COPY) ================')
-                console.log(sessionBase64)
-                console.log('=========================================================\n')
-            }
         }
     })
 
