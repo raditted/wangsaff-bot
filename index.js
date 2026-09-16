@@ -48,9 +48,12 @@ const startSock = async () => {
         const { connection, lastDisconnect } = update
 
         if (connection === 'close') {
+            sock.ev.removeAllListeners()
             const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
             console.log('❌ Connection closed. Reconnect:', shouldReconnect)
-            if (shouldReconnect) startSock()
+            if (shouldReconnect) {
+                setTimeout(() => startSock(), 3000)
+            }
         } else if (connection === 'open') {
             console.log('✅ Bot connected!')
         }
@@ -79,5 +82,10 @@ const startSock = async () => {
         }
     }
 }
+
+setInterval(() => {
+    const mem = process.memoryUsage()
+    console.log(`📊 RSS: ${(mem.rss / 1024 / 1024).toFixed(1)}MB | Heap: ${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB`)
+}, 60_000)
 
 startSock()
