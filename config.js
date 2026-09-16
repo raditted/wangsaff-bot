@@ -2,7 +2,18 @@ export const PREFIX = "."
 
 export const cooldowns = new Map()
 const cdSec = 60
-const delayMs = 1500 // 1.5 s
+const delayMs = 1500
+
+setInterval(() => {
+    const now = Date.now()
+    for (const [key, data] of cooldowns) {
+        const duration = (data.duration || 60) * 1000
+        const elapsed = now - (data.time || data)
+        if (elapsed > duration) {
+            cooldowns.delete(key)
+        }
+    }
+}, 5 * 60 * 1000)
 
 export const cdDelay = async (userJid, sender, sock, msg, keySuffix = '', customDuration = null) => {
     const cdKey = userJid + keySuffix
