@@ -13,10 +13,10 @@ config()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3123
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' })
-    res.end('Bot WA Active!')
+    res.end('Wangsaff Active!')
 }).listen(PORT, () => {
     console.log(`Web server active on port ${PORT}`)
 })
@@ -48,11 +48,13 @@ const startSock = async () => {
         const { connection, lastDisconnect } = update
 
         if (connection === 'close') {
+            const statusCode = lastDisconnect?.error?.output?.statusCode
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut
+            console.log(`❌ Connection closed. Status: ${statusCode}. Reconnect: ${shouldReconnect}`)
             sock.ev.removeAllListeners()
-            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut
-            console.log('❌ Connection closed. Reconnect:', shouldReconnect)
             if (shouldReconnect) {
-                setTimeout(() => startSock(), 3000)
+                const reconnectDelay = statusCode === 428 || statusCode === 515 ? 2000 : 5000
+                setTimeout(() => startSock(), reconnectDelay)
             }
         } else if (connection === 'open') {
             console.log('✅ Bot connected!')
