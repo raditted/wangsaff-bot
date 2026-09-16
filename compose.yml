@@ -1,12 +1,14 @@
-version: "3.8"
-
 services:
   wangsaff-bot:
     build: .
     container_name: wangsaff-bot
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "3131:3131"
-    environment:
+    env_file:
       - .env
 
