@@ -1,30 +1,23 @@
 import { Sticker, StickerTypes } from "wa-sticker-formatter"
 import { downloadMediaMessage } from "@whiskeysockets/baileys"
 import "dotenv/config"
-import axios from "axios"
 import { createAdReplyContext } from "./contextInfo.js"
 import { cooldowns, cdDelay } from "../config.js"
 
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024
 
-let cachedThumbBuffer = null;
+const withTimeout = (promise, ms) =>
+    Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Download timeout')), ms)
+        ),
+    ])
 
 export const handlerSticker = async (msg, sock, sender, userJid) => {
     await sock.sendMessage(sender, { react: { text: "⏳", key: msg.key } })
-    let thumbBuffer = cachedThumbBuffer
-    if (!thumbBuffer && process.env.THUMBNAIL_URL) {
-        try {
-            const response = await axios.get(process.env.THUMBNAIL_URL, {
-                responseType: "arraybuffer",
-            })
-            cachedThumbBuffer = Buffer.from(response.data, "binary")
-            thumbBuffer = cachedThumbBuffer
-        } catch (error) {
-            console.error("❌ Error (downloading thumbnail):", error)
-        }
-    }
 
-    const context = createAdReplyContext(thumbBuffer)
+    const context = createAdReplyContext()
 
     const isImage =
         msg.message.imageMessage ||
@@ -34,7 +27,6 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
         const isCD = await cdDelay(userJid, sender, sock, msg, '_instruction', 5)
         if (isCD) return
 
-        // Set cooldown awal (5 detik) untuk mencegah spam petunjuk
         cooldowns.set(userJid + '_instruction', { time: Date.now(), duration: 5, warned: false })
 
         await sock.sendMessage(sender, { react: { text: "❌", key: msg.key } })
@@ -61,12 +53,24 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
     if (isCD) return
 
     try {
-        const buffer = await downloadMediaMessage(
-        targetMessage,
-        "buffer",
-        {},
-        { reuploadRequest: sock.updateMediaMessage }
+        const buffer = await withTimeout(
+            downloadMediaMessage(
+                targetMessage,
+                "buffer",
+                {},
+                { reuploadRequest: sock.updateMediaMessage }
+            ),
+            30_000
         )
+
+        if (buffer.length > MAX_IMAGE_SIZE) {
+            await sock.sendMessage(sender, { react: { text: "❌", key: msg.key } })
+            await sock.sendMessage(sender, {
+                text: "❌ Gambar terlalu besar (max 2MB).",
+                contextInfo: context,
+            }, { quoted: msg })
+            return
+        }
 
         const sticker = new Sticker(buffer, {
             pack: "Saint-Chamond",
@@ -74,8 +78,6 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
             type: StickerTypes.FULL,
             quality: 80,
         })
-
-        await delay(5000);
 
         const stickerBuffer = await sticker.build()
         await sock.sendMessage(
@@ -88,7 +90,7 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
         }
         )
         await sock.sendMessage(sender, { react: { text: "✅", key: msg.key } })
-        
+
         cooldowns.set(userJid + '_sticker', { time: Date.now(), duration: 60, warned: false })
     } catch (error) {
         console.error("Error (create sticker):", error)
@@ -103,3 +105,4 @@ export const handlerSticker = async (msg, sock, sender, userJid) => {
         )
     }
 }
+
