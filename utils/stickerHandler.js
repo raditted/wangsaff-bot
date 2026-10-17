@@ -15,6 +15,10 @@ const withTimeout = (promise, ms) =>
     ])
 
 export const handlerSticker = async (msg, sock, sender, userJid) => {
+    const quoted = msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
+    const isVideo = msg.message.videoMessage || quoted?.videoMessage;
+    if (isVideo) return;
+
     await sock.sendMessage(sender, { react: { text: "⏳", key: msg.key } })
 
     const context = createAdReplyContext()
